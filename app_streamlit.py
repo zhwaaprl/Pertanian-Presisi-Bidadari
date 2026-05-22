@@ -44,6 +44,11 @@ def save_data(data):
 
 st.title("🌿 Agro Plant Tracker & AI Analysis")
 
+# Pemicu Notifikasi Sukses via Session State (Solusi Bug No Refres)
+if "success_msg" in st.session_state:
+    st.success(st.session_state.success_msg)
+    del st.session_state.success_msg
+
 data = load_data()
 
 # SIDEBAR: Pilih Tanaman
@@ -77,7 +82,7 @@ with tab1:
         col3.metric("Jumlah Daun", last.get('leaf_count', 0))
         col4.metric("Suhu (°C)", last.get('temperature_c', 0))
 
-        # Proses Kalkulasi Model (Sama persis seperti di Flask)
+        # Proses Kalkulasi Model
         health_score = compute_health_score(
             float(last.get('age_days', 0)),
             float(last.get('height_cm', 0)),
@@ -102,7 +107,6 @@ with tab1:
             float(last.get('age_days', 0)),
         )
         
-        # PERUBAHAN DI SINI: Membulatkan hasil panen agar mudah dibaca
         try:
             raw_estimate = predict_harvest_days(
                 float(last.get('age_days', 0)),
@@ -114,10 +118,8 @@ with tab1:
                 plant_choice,
             )
             
-            # Bulatkan angka ke integer terdekat
             estimasi_hari = int(round(float(raw_estimate)))
             
-            # Logika tambahan biar makin keren
             if estimasi_hari <= 0:
                 harvest_estimate = "Sudah siap panen! 🌾"
             else:
@@ -176,10 +178,11 @@ with tab1:
         else:
             st.write(care_recommendations)
 
-# --- TAB 2: FORM INPUT DATA (Menggantikan /save di Flask) ---
+# --- TAB 2: FORM INPUT DATA (Fix Reset Bug & Notifikasi) ---
 with tab2:
     st.subheader("Input Pertumbuhan Mingguan")
-    with st.form("input_form"):
+    # clear_on_submit=True otomatis membersihkan form setelah disubmit
+    with st.form("input_form", clear_on_submit=True):
         week = st.text_input("Minggu Ke- (Contoh: Minggu 1)")
         age_days = st.number_input("Umur (Hari)", min_value=0)
         height_cm = st.number_input("Tinggi (cm)", min_value=0.0, step=0.1)
@@ -190,23 +193,52 @@ with tab2:
         submitted = st.form_submit_button("Simpan Data")
         
         if submitted:
-            record = {
-                'week': week.strip(),
-                'age_days': int(age_days),
-                'height_cm': float(height_cm),
-                'leaf_count': int(leaf_count),
-                'humidity_pct': float(humidity_pct),
-                'temperature_c': float(temperature_c),
-            }
-            data.setdefault(plant_choice, []).append(record)
-            save_data(data)
-            st.success("Data berhasil disimpan!")
-            st.rerun() 
+            if not week.strip():
+                st.error("Kolom 'Minggu Ke-' wajib diisi bro!")
+            else:
+                record = {
+                    'week': week.strip(),
+                    'age_days': int(age_days),
+                    'height_cm': float(height_cm),
+                    'leaf_count': int(leaf_count),
+                    'humidity_pct': float(humidity_pct),
+                    'temperature_c': float(temperature_c),
+                }
+                data.setdefault(plant_choice, []).append(record)
+                save_data(data)
+                
+                # Masukkan notifikasi ke session_state sebelum halaman di-refresh secara paksa
+                st.session_state.success_msg = f"🎉 Data untuk '{week.strip()}' berhasil disimpan!"
+                st.rerun()
 
-# --- TAB 3: REPORT/RIWAYAT ---
+# --- TAB 3: REPORT/RIWAYAT & FITUR HAPUS DATA ---
 with tab3:
     st.subheader(f"Riwayat Data {plant_info['label']}")
     if records:
+        # Menampilkan tabel data utama
         st.dataframe(records, use_container_width=True)
+        
+        # Penambahan Fitur Hapus Data Terpilih
+        st.divider()
+        st.subheader("🗑️ Hapus Riwayat Pengukuran")
+        
+        # Menyusun opsi pilihan drop-down dengan menyisipkan Index list array-nya
+        options_to_delete = [f"Data Ke-{idx+1}: {r.get('week')} (Umur {r.get('age_days')} hari)" for idx, r in enumerate(records)]
+        selected_data = st.selectbox("Pilih baris data yang ingin dihapus:", options_to_delete, index=None, placeholder="Pilih data...")
+        
+        confirm_delete = st.button("Hapus Data Terpilih", type="primary")
+        
+        if confirm_delete:
+            if selected_data:
+                # Cari tau posisi index keberapa data tersebut berada di file JSON
+                idx_to_delete = options_to_delete.index(selected_data)
+                removed_record = data[plant_choice].pop(idx_to_delete)
+                save_data(data) # Simpan ulang perubahan JSON
+                
+                # Kirim sinyal sukses
+                st.session_state.success_msg = f"🗑️ Data '{removed_record.get('week')}' telah berhasil dihapus permanen!"
+                st.rerun()
+            else:
+                st.warning("Pilih salah satu baris data terlebih dahulu lewat menu dropdown di atas.")
     else:
         st.write("Belum ada riwayat data.")

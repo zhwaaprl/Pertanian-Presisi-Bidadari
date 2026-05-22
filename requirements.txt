@@ -1,4 +1,4 @@
-Flask>=2.0.0
-tensorflow>=2.10.0
-numpy>=1.24.0
-pandas>=2.0.0
+streamlit
+tensorflow-cpu
+numpy<2.0.0
+pandas

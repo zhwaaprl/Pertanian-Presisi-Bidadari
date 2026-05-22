@@ -1,0 +1,4 @@
+env_agro/
+__pycache__/
+.venv/
+venv/

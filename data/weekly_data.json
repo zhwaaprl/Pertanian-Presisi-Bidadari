@@ -1,0 +1,43 @@
+{
+  "cabai": [
+    {
+      "week": "Minggu 1",
+      "age_days": 7,
+      "height_cm": 16.9,
+      "leaf_count": 19,
+      "humidity_pct": 50.0,
+      "temperature_c": 27.9,
+      "condition": "Cukup",
+      "health_score": 5.0,
+      "notes": ""
+    },
+    {
+      "week": "minggu 2",
+      "age_days": 14,
+      "height_cm": 20.0,
+      "leaf_count": 29,
+      "humidity_pct": 23.9,
+      "temperature_c": 30.0
+    }
+  ],
+  "tomat": [
+    {
+      "week": "Minggu 7",
+      "age_days": 49,
+      "height_cm": 77.9,
+      "leaf_count": 100,
+      "humidity_pct": 28.0,
+      "temperature_c": 35.0
+    }
+  ],
+  "terong": [
+    {
+      "week": "Minggu 1",
+      "age_days": 7,
+      "height_cm": 10.3,
+      "leaf_count": 8,
+      "humidity_pct": 40.0,
+      "temperature_c": 25.0
+    }
+  ]
+}
